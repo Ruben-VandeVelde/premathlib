@@ -25,22 +25,7 @@ lemma b: - I * I = (1: ℂ) := by norm_num
 noncomputable def re_of {F' : Type*} [normed_group F'] [normed_space ℂ F'] (f : F' →L[ℂ ] ℂ)
     : F' →L[ℝ] ℝ
     := continuous_linear_map.re.comp $ f.restrict_scalars ℝ
-/-
-lemma continuous_re_of : continuous (continuous_linear_map.re ∘ f)
-:= sorry
 
-noncomputable def re_of {F : Type*} [normed_group F] [normed_space ℂ F] (f : F →L[ℂ] ℂ)
-    : F →L[ℝ] ℝ 
---    := λ z, (f z).re
-    := {
-        to_fun := continuous_linear_map.re ∘ f,
-        add := sorry,
-        smul := sorry,
---(add  : ∀x y, to_fun (x + y) = to_fun x + to_fun y)
---(smul : ∀(c : R) x, to_fun (c • x) = c • to_fun x)
-        cont := continuous_re_of,
-    }
--/
 variables  {F : Type*} [normed_group F] [normed_space ℂ F]
 
 noncomputable def c (f : F →L[ℂ] ℂ) := λ z: F, ((f z).re : ℂ) - (f (I • z)).re * I
@@ -63,14 +48,6 @@ lemma x (f : F →L[ℂ] ℂ) :
     ... = (f ((-I) •  I • z)).im : by rw mul_smul
     ... = ((-I) * f (I • z)).im : by rw [continuous_linear_map.map_smul, smul_eq_mul]
     ... = - (f (I • z)).re : by rw [←neg_mul_eq_neg_mul, neg_im, a'],
-/-
-
-    calc f z
-        = (f z).re + (f z).im * I : by assumption
-    ... = (f z).re + (↑ - (f (I • z)).re) * I : by rw this
-    ... = (f z).re + (- ↑ (f (I • z)).re) * I : by rw complex.of_real_neg
-    ... = (f z).re - (f (I • z)).re * I : by ring
--/
 end
 
 -- (2) Bovendien is Re φ 0 ∈ L(Y, R): Y is een C-vectorruimte, en dus ook een
@@ -84,41 +61,8 @@ lemma y (f : F →L[ℂ] ℂ) : ∥re_of f∥ ≤ ∥f∥ := begin
         (f.restrict_scalars ℝ),
     rw [complex.continuous_linear_map.re_norm, one_mul] at this,
     exact this,
-    /-
-    rw continuous_linear_map.norm_def,
-    rw continuous_linear_map.norm_def,
-    have := λ z, complex.abs_re_le_abs z,
-    have : ∀ (x : F), ∥(re_of f) x∥ = ∥ (f x).re∥ := by {
-        intro,
-        sorry,
-    },
-    have : ∀ (x : F), abs (((re_of f) x):ℂ ) = abs ((f x).re:ℂ ) := sorry,
-    --rw le_Inf_iff,
-    sorry,
-    -/
 end
--- p : subspace _ F
--- f : p →L[ℂ] ℂ
--- re_of f : p →L[ℝ] ℝ
--- →
--- fr : F →L[ℝ] ℝ uitbr van re_of f
 
-
--- vector_space ℂ X
-    -- add_comm_group X
-    --      to_distrib_mul_action : distrib_mul_action ℂ X
-    --      add_smul : ∀ (r s : ℂ) (x : X), (r + s) • x = r • x + s • x
-    --      zero_smul : ∀ (x : X), (0:ℂ) • x = (0:ℂ)
-
--- Y: subspace ℂ X
-
--- →??? Y' : subspace ℝ X'
-
-/-
-lemma y' {G : Type*} [normed_group G] [normed_space ℂ G] (X: subspace ℂ G) :
-    ∃ X': subspace ℝ G
-    := sorry
--/
 noncomputable def restrict_scalars
     {G : Type*} [normed_group G] [normed_space ℂ G] (X: subspace ℂ G)
     : subspace ℝ G
@@ -145,8 +89,6 @@ noncomputable def restrict_scalars
 --          f = Re φ 0 = re_of φ 0 : p →L[ℝ] ℝ
 --          p = Y ≤_ℂ X = F
 --          → φ r = g: F →L[ℝ] ℝ
--- theorem exists_extension_norm_eq (p : subspace ℝ E) (f : p →L[ℝ] ℝ) :
---  ∃ g : E →L[ℝ] ℝ, (∀ x : p, g x = f x) ∧ ∥g∥ = ∥f∥ :=
 lemma z (p : subspace ℂ F) (f : p →L[ℂ] ℂ) : 
   ∃ g : F →L[ℝ] ℝ, (∀ x : (restrict_scalars p), g x = (re_of f) x) ∧ ∥g∥ = ∥re_of f∥ := begin
     exact exists_extension_norm_eq (p.restrict_scalars ℝ) (re_of f),
@@ -243,40 +185,6 @@ exact { to_fun := fc,
     ... = a * fc x + (b * I) * fc x : by rw mul_assoc
     ... = (a + b * I) * fc x : by rw add_mul
     ... = c * fc x : by rw [re_add_im c],
-
-/-
-    calc
-        (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (I • c • x)
-        = (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (c • I • x) : by rw smul_comm
-    ... = (fr.to_fun ((a + b * I) • x) : ℂ)
-            - I * fr.to_fun ((a + b * I) • I • x) : by rw [re_add_im c]
-    ... = (fr.to_fun (a • x + (b * I) • x) : ℂ)
-            - I * fr.to_fun ((a + b * I) • I • x) : by rw add_smul
-    ... = (fr.to_fun (a • x + (b * I) • x) : ℂ)
-            - I * fr.to_fun (a • I • x + (b * I) • I • x) : by rw add_smul
-    ... = ((fr.to_fun (a • x) + fr.to_fun ((b * I) • x)) : ℂ)
-            - I * fr.to_fun (a • I • x + (b * I) • I • x) : by rw [←complex.of_real_add, fr.add]
-    ... = ((fr.to_fun (a • x) + fr.to_fun ((b * I) • x)) : ℂ)
-            - I * (fr.to_fun (a • I • x) + fr.to_fun ((b * I) • I • x)) : by rw [←complex.of_real_add, fr.add]
---    ... = ((fr.to_fun (a • x) + fr.to_fun ((b * I) • x)) : ℂ)
---            - I * fr.to_fun (I • (a + b * I) • x) : by rw fr.add
---    ... = (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (c • (I • x)) : by rw smul_comm
---    ... = (c • fr.to_fun x : ℂ) - I * c • fr.to_fun (I • x) : by rw [fr.smul c x]
-    ... = c * (fr.to_fun x - I * fr.to_fun (I • x)) : by sorry,
--/
-
-/-
-    calc
-        (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (I • c • x)
-        = (fr.to_fun (((c.re : ℂ) + c.im * I) • x) : ℂ)
-            - I * fr.to_fun (I • ((c.re : ℂ) + c.im * I) • x) : by rw re_add_im c
-    ... = ((fr.to_fun ((c.re: ℂ) • x) + fr.to_fun (((c.im: ℂ) * I) • x)) : ℂ)
-            - I * fr.to_fun (I • ((c.re : ℂ) + c.im * I) • x) : by rw re_add_im c
-    ... = (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (c • (I • x)) : by rw smul_comm
-    ... = (c • fr.to_fun x : ℂ) - I * c • fr.to_fun (I • x) : by rw [fr.smul c x]
-    ... = c * (fr.to_fun x - I * fr.to_fun (I • x)) : by sorry,
--/
-
   end
 }
 end
@@ -287,15 +195,7 @@ noncomputable def continuous_linear_map.extend_to_C
     let lm := @linear_map.extend_to_C F' _ _ fr,
     refine (lm.mk_continuous ∥fr∥) _,
     begin
-        /-
-        apply continuous.sub,
-        change continuous (↑fr.to_fun),
-        apply embedding_coe.continuous_iff
-        exact fr.cont,
-            intros s hs,
-        -/
         intros,
-        --refine le_trans _ (continuous_linear_map.le_op_norm fr x),
         dsimp only [lm],
         classical,
         by_cases lm x = 0,
@@ -331,8 +231,12 @@ noncomputable def continuous_linear_map.extend_to_C
         {
             ext,
             {
-                rw of_real_re,
-                sorry,
+                unfold_coes at *,
+                calc (lm.to_fun (norm • x)).re
+                    = ((fr.to_linear_map.to_fun (norm • x) : ℂ) - I * fr.to_linear_map.to_fun (I • (norm • x))).re : rfl
+                ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - (I * fr.to_linear_map.to_fun (I • (norm • x))).re : by rw sub_re
+                ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - ((fr.to_linear_map.to_fun (I • (norm • x)): ℂ) * I).re : by rw mul_comm
+                ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re : by rw [smul_re, I_re, mul_zero, sub_zero],
             },
             rw of_real_im,
             unfold_coes at *,
@@ -342,7 +246,6 @@ noncomputable def continuous_linear_map.extend_to_C
         have : ∥lm x∥ = ∥fr (norm • x)∥,
         {
             rw [complex.norm_eq_abs, real.norm_eq_abs, ←abs_of_real],
-            -- ⊢ (⇑lm x).abs = abs (⇑fr x)
             calc (lm x).abs
                 = norm.abs * (lm x).abs : by rw [‹norm.abs = 1›, one_mul]
             ... = (norm * lm x).abs : by rw complex.abs_mul
@@ -361,7 +264,6 @@ end
 lemma d (p : subspace ℂ   F) (f : p →L[ℂ] ℂ) :
     ∃ g : F →L[ℂ] ℂ, (∀ x : (restrict_scalars p), g x = f x) ∧ ∥g∥ = ∥f∥
     := begin
-    --have := ↥exists_extension_norm_eq (p.restrict_scalars ℝ) (re_of f),
     have := z p f,
     cases this with g hg,
     use continuous_linear_map.extend_to_C g,
