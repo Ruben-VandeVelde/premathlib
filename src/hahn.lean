@@ -26,13 +26,20 @@ noncomputable def re_of {F' : Type*} [normed_group F'] [normed_space ℂ F'] (f 
     : F' →L[ℝ] ℝ
     := continuous_linear_map.re.comp $ f.restrict_scalars ℝ
 
+lemma re_of_apply {F' : Type*} [normed_group F'] [normed_space ℂ F'] (f : F' →L[ℂ ] ℂ) (x: F')
+    : (re_of f) x = (f x).re
+    := begin
+    dsimp [re_of],
+    refl,
+end
+
 variables  {F : Type*} [normed_group F] [normed_space ℂ F]
 
 noncomputable def c (f : F →L[ℂ] ℂ) := λ z: F, ((f z).re : ℂ) - (f (I • z)).re * I
 
 -- (1) We merken op dat φ 0 ∈ L(Y, C) volledig bepaald is door Re φ 0 : omdat
 --     φ 0 (iy) = iφ 0 (y), is Im φ 0 (y) = − Re φ 0 (iy) voor elke y ∈ Y .
-lemma x (f : F →L[ℂ] ℂ) :
+lemma xx (f : F →L[ℂ] ℂ) :
   ∀ z, f z = c f z := begin
     intro,
     rw c,
@@ -189,14 +196,12 @@ exact { to_fun := fc,
 }
 end
 
-noncomputable def continuous_linear_map.extend_to_C
+lemma norm_bound
     {F' : Type*} [normed_group F'] [normed_space ℂ F'] (fr : F' →L[ℝ] ℝ)
-    : F' →L[ℂ] ℂ := begin
-    let lm := @linear_map.extend_to_C F' _ _ fr,
-    refine (lm.mk_continuous ∥fr∥) _,
-    begin
+    : ∀ (x : F'), ∥(@linear_map.extend_to_C F' _ _ fr) x∥ ≤ ∥fr∥ * ∥x∥
+:= begin
         intros,
-        dsimp only [lm],
+        let lm := @linear_map.extend_to_C F' _ _ fr,
         classical,
         by_cases lm x = 0,
         {
@@ -258,19 +263,55 @@ noncomputable def continuous_linear_map.extend_to_C
             ≤ ∥fr∥ * ∥norm • x∥ : continuous_linear_map.le_op_norm _ _
         ... = ∥fr∥ * (∥norm∥ * ∥x∥) : by rw norm_smul
         ... = ∥fr∥ * ∥x∥ : by rw [norm_eq_abs, ‹norm.abs = 1›, one_mul],
-    end,
+end
+
+noncomputable def continuous_linear_map.extend_to_C
+    {F' : Type*} [normed_group F'] [normed_space ℂ F'] (fr : F' →L[ℝ] ℝ)
+    : F' →L[ℂ] ℂ := begin
+    let lm := @linear_map.extend_to_C F' _ _ fr,
+    exact (lm.mk_continuous ∥fr∥) (norm_bound _),
 end
 
 lemma d (p : subspace ℂ   F) (f : p →L[ℂ] ℂ) :
-    ∃ g : F →L[ℂ] ℂ, (∀ x : (restrict_scalars p), g x = f x) ∧ ∥g∥ = ∥f∥
+    ∃ g : F →L[ℂ] ℂ, (∀ x : p, g x = f x) ∧ ∥g∥ = ∥f∥
     := begin
     have := z p f,
     cases this with g hg,
     use continuous_linear_map.extend_to_C g,
-    split,
+    have : ∀ (x : p), (g.extend_to_C) x = f x,
     {
         intros,
-        sorry,
+        have := hg.1 x,
+        have ttt := xx f x,
+        -- ⊢ ⇑(g.extend_to_C) ↑x = ⇑f x
+        rw ttt,
+        dsimp [c],
+        rw ←re_of_apply,
+        rw ←this,
+        let ix : ↥p := I • x,
+        rw ← (show ix = I • x, by refl),
+        rw ←re_of_apply,
+        rw ←(hg.1 ix),
+        rw mul_comm,
+        refl,
     },
-    sorry,
+
+    split,
+    assumption,
+
+    refine le_antisymm _ _,
+    have := continuous_linear_map.op_norm_le_bound
+        (@continuous_linear_map.extend_to_C _ _ _ (g))
+        (continuous_linear_map.op_norm_nonneg (g))
+        (norm_bound _),
+    calc  ∥g.extend_to_C∥ ≤ ∥g∥ : this
+    ... = ∥re_of f∥ : hg.2
+    ... ≤ ∥f∥ : y _,
+
+    refine continuous_linear_map.op_norm_le_bound _ _ _,
+    exact continuous_linear_map.op_norm_nonneg _,
+
+    intros,
+    rw ←this,
+    exact  continuous_linear_map.le_op_norm _ _,
 end
