@@ -7,9 +7,10 @@ variables  {F : Type*} [normed_group F] [normed_space ℂ F]
 
 noncomputable def linear_map.extend_to_C
     {F' : Type*} [normed_group F'] [normed_space ℂ F'] (fr : F' →ₗ[ℝ] ℝ)
-    : F' →ₗ[ℂ] ℂ := begin
+    : F' →ₗ[ℂ] ℂ :=
+begin
     let fc := λ z, (fr.to_fun (z) : ℂ) - I * fr.to_fun (I • z),
-    have add : ∀ (x y : F'), fc (add_group.add x y) = fc x + fc y,
+    have add : ∀ (x y : F'), fc (x + y) = fc x + fc y,
     {
         intros,
         calc
@@ -20,41 +21,39 @@ noncomputable def linear_map.extend_to_C
         ... = fr.to_fun x - I * fr.to_fun (I • x) + (fr.to_fun y  - I * fr.to_fun (I • y)) : by ring,
     },
 
-exact { to_fun := fc,
-  add := add,
-  smul := begin
-    let fc := λ z, (fr.to_fun (z) : ℂ) - I * fr.to_fun (I • z),
-    have ℝ_linear : ∀ (c: ℝ) (x: F'), fc (c • x) = c * fc x,
+    have smul_ℝ : ∀ (c: ℝ) (x: F'), fc (c • x) = c * fc x,
     {
-        intros,
-        have hx' : ∀ x': F', fr.to_fun (c • x') = c * fr.to_fun (x'),
+        have h1 : ∀ (c: ℝ) (x: F'), fr.to_fun (c • x) = c * fr.to_fun (x),
         {
             intros,
             rw [fr.smul, smul_eq_mul],
         },
 
-        have : I * fr.to_fun (I • (c • x)) = c * (I * fr.to_fun (I • x)),
+        have h2 : ∀ (c: ℝ) (x: F'), I * fr.to_fun (I • (c • x)) = c * (I * fr.to_fun (I • x)),
         {
+            intros,
             calc
                 I * fr.to_fun (I • (c • x))
                 = I * fr.to_fun (I • ((c:ℂ) • x)) : by refl
             ... = I * fr.to_fun ((c:ℂ) • (I • x)) : by rw smul_comm I _ x
             ... = I * fr.to_fun (c • (I • x)) : by refl
-            ... = I * (c * fr.to_fun (I • x)) : by rw [hx' (I • x), complex.of_real_mul]
+            ... = I * (c * fr.to_fun (I • x)) : by rw [h1, complex.of_real_mul]
             ... = c * (I * fr.to_fun (I • x)) : by ring,
         },
 
+        intros,
         calc
             (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (I • (c • x))
-            = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • (c • x)) : by rw [←complex.of_real_mul, hx']
+            = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • (c • x)) : by rw [←complex.of_real_mul, h1]
         ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • ((c:ℂ) • x)) : by refl
         ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun ((c:ℂ) • (I • x)) : by rw smul_comm I _ x
         ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (c • (I • x)) : by refl
-        ... = ((c * fr.to_fun x) : ℂ) - I * (c * fr.to_fun (I • x)) : by rw [←complex.of_real_mul _ (fr.to_fun (I • x)), hx']
+        ... = ((c * fr.to_fun x) : ℂ) - I * (c * fr.to_fun (I • x)) : by rw [←complex.of_real_mul _ (fr.to_fun (I • x)), h1]
         ... = ((c * fr.to_fun x) : ℂ) - (c * (I * fr.to_fun (I • x))) : by ring
         ... = c * (fr.to_fun x - I * fr.to_fun (I • x)) : by ring,
     },
-    have hi : ∀ (x: F'), fc (I • x) = I * fc x,
+
+    have smul_I : ∀ (x: F'), fc (I • x) = I * fc x,
     {
         intros,
         have := fr.smul,
@@ -75,26 +74,30 @@ exact { to_fun := fc,
         ... = (I * fr.to_fun x) - I * (I * fr.to_fun (I • x)) : by rw [mul_assoc]
         ... = I * fc x : by rw mul_sub,
     },
-    intros,
-    let a : ℂ := c.re,
-    let b : ℂ := c.im,
-    have add' : fc (a • x + (b * I) • x) = fc (a • x) + fc ((b * I) • x) := add ((a • x)) (((b * I) • x)),
-    calc
-        fc (c • x)
-        = fc ((a + b * I) • x) : by rw [re_add_im c]
-    ... = fc (a • x + (b * I) • x) : by rw add_smul
-    ... = fc (a • x) + fc ((b * I) • x) : by rw add'
-    ... = fc (c.re • x) + fc ((b * I) • x) : rfl
-    ... = a * fc x + fc ((b * I) • x) : by rw ℝ_linear
-    ... = a * fc x + fc (b • I • x) : by rw mul_smul
-    ... = a * fc x + fc (c.im • I • x) : rfl
-    ... = a * fc x + b * fc (I • x) : by rw ℝ_linear
-    ... = a * fc x + b * (I * fc x) : by rw hi
-    ... = a * fc x + (b * I) * fc x : by rw mul_assoc
-    ... = (a + b * I) * fc x : by rw add_mul
-    ... = c * fc x : by rw [re_add_im c],
-  end
-}
+
+    have smul_ℂ : ∀ (c : ℂ) (x : F'), fc (c • x) = c • fc x,
+    {
+        intros,
+        let a : ℂ := c.re,
+        let b : ℂ := c.im,
+        have add' : fc (a • x + (b * I) • x) = fc (a • x) + fc ((b * I) • x) := add ((a • x)) (((b * I) • x)),
+        calc
+            fc (c • x)
+            = fc ((a + b * I) • x) : by rw [re_add_im c]
+        ... = fc (a • x + (b * I) • x) : by rw add_smul
+        ... = fc (a • x) + fc ((b * I) • x) : by rw add'
+        ... = fc (c.re • x) + fc ((b * I) • x) : rfl
+        ... = a * fc x + fc ((b * I) • x) : by rw smul_ℝ
+        ... = a * fc x + fc (b • I • x) : by rw mul_smul
+        ... = a * fc x + fc (c.im • I • x) : rfl
+        ... = a * fc x + b * fc (I • x) : by rw smul_ℝ
+        ... = a * fc x + b * (I * fc x) : by rw smul_I
+        ... = a * fc x + (b * I) * fc x : by rw mul_assoc
+        ... = (a + b * I) * fc x : by rw add_mul
+        ... = c * fc x : by rw [re_add_im c],
+    },
+
+    exact { to_fun := fc, add := add, smul := smul_ℂ }
 end
 
 lemma norm_bound
