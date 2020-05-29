@@ -3,14 +3,12 @@ import analysis.normed_space.operator_norm
 import analysis.normed_space.hahn_banach
 open complex
 
-variables  {F : Type*} [normed_group F] [normed_space ℂ F]
+variables {F : Type*} [normed_group F] [normed_space ℂ F]
 
-noncomputable def linear_map.extend_to_C
-    {F' : Type*} [normed_group F'] [normed_space ℂ F'] (fr : F' →ₗ[ℝ] ℝ)
-    : F' →ₗ[ℂ] ℂ :=
+noncomputable def linear_map.extend_to_C (fr : F →ₗ[ℝ] ℝ) : F →ₗ[ℂ] ℂ :=
 begin
     let fc := λ z, (fr.to_fun (z) : ℂ) - I * fr.to_fun (I • z),
-    have add : ∀ (x y : F'), fc (x + y) = fc x + fc y,
+    have add : ∀ (x y : F), fc (x + y) = fc x + fc y,
     {
         intros,
         calc
@@ -21,7 +19,7 @@ begin
         ... = fr.to_fun x - I * fr.to_fun (I • x) + (fr.to_fun y  - I * fr.to_fun (I • y)) : by ring,
     },
 
-    have smul_ℝ : ∀ (c: ℝ) (x: F'), fc (c • x) = c * fc x,
+    have smul_ℝ : ∀ (c: ℝ) (x: F), fc (c • x) = c * fc x,
     {
         intros,
         calc
@@ -35,7 +33,7 @@ begin
         ... = c * (fr.to_fun x - I * fr.to_fun (I • x)) : by ring,
     },
 
-    have smul_I : ∀ (x: F'), fc (I • x) = I * fc x,
+    have smul_I : ∀ (x: F), fc (I • x) = I * fc x,
     {
         intros,
         calc fc (I • x)
@@ -56,17 +54,16 @@ begin
         ... = I * fc x : by rw mul_sub,
     },
 
-    have smul_ℂ : ∀ (c : ℂ) (x : F'), fc (c • x) = c • fc x,
+    have smul_ℂ : ∀ (c : ℂ) (x : F), fc (c • x) = c • fc x,
     {
         intros,
         let a : ℂ := c.re,
         let b : ℂ := c.im,
-        have add' : fc (a • x + (b * I) • x) = fc (a • x) + fc ((b * I) • x) := add ((a • x)) (((b * I) • x)),
         calc
             fc (c • x)
-            = fc ((a + b * I) • x) : by rw [re_add_im c]
+            = fc ((a + b * I) • x) : by rw re_add_im
         ... = fc (a • x + (b * I) • x) : by rw add_smul
-        ... = fc (a • x) + fc ((b * I) • x) : by rw add'
+        ... = fc (a • x) + fc ((b * I) • x) : by rw add
         ... = fc (c.re • x) + fc ((b * I) • x) : rfl
         ... = a * fc x + fc ((b * I) • x) : by rw smul_ℝ
         ... = a * fc x + fc (b • I • x) : by rw mul_smul
@@ -81,78 +78,65 @@ begin
     exact { to_fun := fc, add := add, smul := smul_ℂ }
 end
 
-lemma norm_bound
-    {F' : Type*} [normed_group F'] [normed_space ℂ F'] (fr : F' →L[ℝ] ℝ)
-    : ∀ (x : F'), ∥(@linear_map.extend_to_C F' _ _ fr) x∥ ≤ ∥fr∥ * ∥x∥
-:= begin
-        intros,
-        let lm := @linear_map.extend_to_C F' _ _ fr,
-        classical,
-        by_cases lm x = 0,
-        {
-            rw [h, norm_zero],
-            apply mul_nonneg'; exact norm_nonneg _,
-        },
-        let fx := (lm x)⁻¹,
-        let norm := fx / fx.abs,
-        have : norm.abs = 1,
-        {
-            simp only [abs_of_real, of_real_inv, complex.abs_div, complex.abs_inv, complex.abs_abs],
-            apply div_self,
-            apply inv_ne_zero,
-            dsimp [(≠)],
-            rw complex.abs_eq_zero,
-            exact h,
-        },
-        have : (norm * lm x).im = 0,
-        {
-            dsimp only [norm, fx],
-            rw div_mul_eq_mul_div,
-            rw inv_mul_cancel h,
-            rw [←complex.of_real_one, ←of_real_div, of_real_im],
-        },
-        have : (lm (norm • x)).im = 0,
+lemma norm_bound (fr : F →L[ℝ] ℝ) :
+    ∀ (x : F), ∥(linear_map.extend_to_C fr.to_linear_map) x∥ ≤ ∥fr∥ * ∥x∥ :=
+begin
+    intros,
+    let lm := fr.to_linear_map.extend_to_C,
+    classical,
+    by_cases lm x = 0,
+    {
+        rw [h, norm_zero],
+        apply mul_nonneg'; exact norm_nonneg _,
+    },
+    let fx := (lm x)⁻¹,
+    let norm := fx / fx.abs,
+    have : norm.abs = 1,
+    {
+        rw [complex.abs_div, abs_of_real, complex.abs_abs],
+        apply div_self,
+        dsimp only [fx],
+        rw [complex.abs_inv],
+        apply inv_ne_zero,
+        dsimp only [(≠)],
+        rw complex.abs_eq_zero,
+        exact h,
+    },
+    have : lm (norm • x) = fr (norm • x),
+    {
+        ext,
         {
             unfold_coes at *,
-            rw [lm.smul, smul_eq_mul],
-            assumption,
+            calc (lm.to_fun (norm • x)).re
+                = ((fr.to_linear_map.to_fun (norm • x) : ℂ) - I * fr.to_linear_map.to_fun (I • (norm • x))).re : rfl
+            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - (I * fr.to_linear_map.to_fun (I • (norm • x))).re : by rw sub_re
+            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - ((fr.to_linear_map.to_fun (I • (norm • x)): ℂ) * I).re : by rw mul_comm
+            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re : by rw [smul_re, I_re, mul_zero, sub_zero],
         },
-        have : lm (norm • x) = fr (norm • x),
-        {
-            ext,
-            {
-                unfold_coes at *,
-                calc (lm.to_fun (norm • x)).re
-                    = ((fr.to_linear_map.to_fun (norm • x) : ℂ) - I * fr.to_linear_map.to_fun (I • (norm • x))).re : rfl
-                ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - (I * fr.to_linear_map.to_fun (I • (norm • x))).re : by rw sub_re
-                ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - ((fr.to_linear_map.to_fun (I • (norm • x)): ℂ) * I).re : by rw mul_comm
-                ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re : by rw [smul_re, I_re, mul_zero, sub_zero],
-            },
-            rw of_real_im,
-            unfold_coes at *,
-            rw [lm.smul, smul_eq_mul],
-            assumption,
-        },
-        have : ∥lm x∥ = ∥fr (norm • x)∥,
-        {
-            rw [complex.norm_eq_abs, real.norm_eq_abs, ←abs_of_real],
-            calc (lm x).abs
-                = norm.abs * (lm x).abs : by rw [‹norm.abs = 1›, one_mul]
-            ... = (norm * lm x).abs : by rw complex.abs_mul
-            ... = (lm (norm • x)).abs : by {unfold_coes, rw [←smul_eq_mul, lm.smul]}
-            ... = ((fr (norm • x)) : ℂ).abs : by rw this
-        },
-        rw this,
 
-        calc ∥fr (norm • x)∥
-            ≤ ∥fr∥ * ∥norm • x∥ : continuous_linear_map.le_op_norm _ _
-        ... = ∥fr∥ * (∥norm∥ * ∥x∥) : by rw norm_smul
-        ... = ∥fr∥ * ∥x∥ : by rw [norm_eq_abs, ‹norm.abs = 1›, one_mul],
+        rw of_real_im,
+        calc (lm (norm • x)).im
+            = (norm * lm x).im : by { unfold_coes at *, rw [lm.smul, smul_eq_mul], }
+        ... = ((lm x)⁻¹ / ((lm x)⁻¹.abs) * lm x).im : rfl
+        ... = ((1 / (lm x)⁻¹.abs) : ℂ).im : by rw [div_mul_eq_mul_div, inv_mul_cancel h]
+        ... = 0 : by rw [←complex.of_real_one, ←of_real_div, of_real_im],
+    },
+    have : ∥lm x∥ = ∥fr (norm • x)∥,
+    {
+        rw [complex.norm_eq_abs, real.norm_eq_abs, ←abs_of_real],
+        calc (lm x).abs
+            = norm.abs * (lm x).abs : by rw [‹norm.abs = 1›, one_mul]
+        ... = (norm * lm x).abs : by rw complex.abs_mul
+        ... = (lm (norm • x)).abs : by {unfold_coes, rw [←smul_eq_mul, lm.smul]}
+        ... = ((fr (norm • x)) : ℂ).abs : by rw this
+    },
+
+    calc ∥lm x∥
+        = ∥fr (norm • x)∥ : by rw this
+    ... ≤ ∥fr∥ * ∥norm • x∥ : continuous_linear_map.le_op_norm _ _
+    ... = ∥fr∥ * (∥norm∥ * ∥x∥) : by rw norm_smul
+    ... = ∥fr∥ * ∥x∥ : by rw [norm_eq_abs, ‹norm.abs = 1›, one_mul],
 end
 
-noncomputable def continuous_linear_map.extend_to_C
-    {F' : Type*} [normed_group F'] [normed_space ℂ F'] (fr : F' →L[ℝ] ℝ)
-    : F' →L[ℂ] ℂ := begin
-    let lm := @linear_map.extend_to_C F' _ _ fr,
-    exact (lm.mk_continuous ∥fr∥) (norm_bound _),
-end
+noncomputable def continuous_linear_map.extend_to_C (fr : F →L[ℝ] ℝ) : F →L[ℂ] ℂ :=
+  fr.to_linear_map.extend_to_C.mk_continuous ∥fr∥ (norm_bound _)
