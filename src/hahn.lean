@@ -283,7 +283,6 @@ lemma d (p : subspace ℂ   F) (f : p →L[ℂ] ℂ) :
         intros,
         have := hg.1 x,
         have ttt := xx f x,
-        -- ⊢ ⇑(g.extend_to_C) ↑x = ⇑f x
         rw ttt,
         dsimp [c],
         rw ←re_of_apply,
