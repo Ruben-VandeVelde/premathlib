@@ -23,32 +23,14 @@ begin
 
     have smul_ℝ : ∀ (c: ℝ) (x: F'), fc (c • x) = c * fc x,
     {
-        have h1 : ∀ (c: ℝ) (x: F'), fr.to_fun (c • x) = c * fr.to_fun (x),
-        {
-            intros,
-            rw [fr.smul, smul_eq_mul],
-        },
-
-        have h2 : ∀ (c: ℝ) (x: F'), I * fr.to_fun (I • (c • x)) = c * (I * fr.to_fun (I • x)),
-        {
-            intros,
-            calc
-                I * fr.to_fun (I • (c • x))
-                = I * fr.to_fun (I • ((c:ℂ) • x)) : by refl
-            ... = I * fr.to_fun ((c:ℂ) • (I • x)) : by rw smul_comm I _ x
-            ... = I * fr.to_fun (c • (I • x)) : by refl
-            ... = I * (c * fr.to_fun (I • x)) : by rw [h1, complex.of_real_mul]
-            ... = c * (I * fr.to_fun (I • x)) : by ring,
-        },
-
         intros,
         calc
             (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (I • (c • x))
-            = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • (c • x)) : by rw [←complex.of_real_mul, h1]
+            = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • (c • x)) : by rw [←complex.of_real_mul, fr.smul, smul_eq_mul]
         ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • ((c:ℂ) • x)) : by refl
         ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun ((c:ℂ) • (I • x)) : by rw smul_comm I _ x
         ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (c • (I • x)) : by refl
-        ... = ((c * fr.to_fun x) : ℂ) - I * (c * fr.to_fun (I • x)) : by rw [←complex.of_real_mul _ (fr.to_fun (I • x)), h1]
+        ... = ((c * fr.to_fun x) : ℂ) - I * (c * fr.to_fun (I • x)) : by rw [←complex.of_real_mul _ (fr.to_fun (I • x)), fr.smul, smul_eq_mul]
         ... = ((c * fr.to_fun x) : ℂ) - (c * (I * fr.to_fun (I • x))) : by ring
         ... = c * (fr.to_fun x - I * fr.to_fun (I • x)) : by ring,
     },
@@ -56,7 +38,6 @@ begin
     have smul_I : ∀ (x: F'), fc (I • x) = I * fc x,
     {
         intros,
-        have := fr.smul,
         calc fc (I • x)
             = (fr.to_fun (I • x) : ℂ) - I * fr.to_fun (I • I • x) : rfl
         ... = (fr.to_fun (I • x) : ℂ) - I * fr.to_fun ((I * I) • x) : by rw [mul_smul]
