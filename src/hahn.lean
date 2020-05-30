@@ -60,17 +60,7 @@ noncomputable def restrict_scalars
     carrier := X.carrier,
     zero := X.zero,
     add := X.add,
-    smul := λ (c:ℝ) {x: G}, λ hx, begin
-        have : c • x ∈ X.carrier,
-        { apply X.smul, assumption, },
-        have : (algebra_map ℝ ℂ) c • x = c • x,
-        {refl},
-        change set.mem ((algebra_map ℝ ℂ) c • x) X.carrier,
-        
-        rw this,
-        assumption,
-    end
-
+    smul := λ (c : ℝ) {x: G} hx, X.smul c hx,
 }
 
 -- (3) D.m.v. stelling 2.5.4 vinden we een (R-lineaire) uitbreiding φ r ∈ L(X(F), R)
