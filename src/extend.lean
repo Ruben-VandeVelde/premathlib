@@ -138,5 +138,28 @@ begin
     ... = ∥fr∥ * ∥x∥ : by rw [norm_eq_abs, ‹norm.abs = 1›, one_mul],
 end
 
+
 noncomputable def continuous_linear_map.extend_to_C (fr : F →L[ℝ] ℝ) : F →L[ℂ] ℂ :=
   fr.to_linear_map.extend_to_C.mk_continuous ∥fr∥ (norm_bound _)
+/-
+lemma norm_bound' (fr : F →L[ℝ] ℝ) :
+    ∥fr.extend_to_C∥ = ∥fr∥ :=
+begin
+    refine le_antisymm _ _,
+    exact fr.extend_to_C.op_norm_le_bound fr.op_norm_nonneg (norm_bound _),
+
+    apply fr.op_norm_le_bound fr.extend_to_C.op_norm_nonneg,
+    intros,
+    --dsimp [continuous_linear_map.extend_to_C, linear_map.extend_to_C],
+    have : ∥fr x∥
+        ≤ ∥fr.extend_to_C x∥,
+    {
+        change ∥fr x∥
+        ≤ ∥(fr x : complex) - I * fr (I • x)∥,
+        sorry,
+    },
+    calc ∥fr x∥
+        ≤ ∥fr.extend_to_C x∥ : this
+    ... ≤ ∥fr.extend_to_C∥ * ∥x∥ : continuous_linear_map.le_op_norm _ _,
+end
+-/
