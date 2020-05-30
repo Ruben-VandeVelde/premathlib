@@ -54,28 +54,21 @@ begin
 end
 
 noncomputable def restrict_scalars
-    {G : Type*} [normed_group G] [normed_space ℂ G] (X: subspace ℂ G) :
-    subspace ℝ G :=
-{
-    carrier := X.carrier,
-    zero := X.zero,
-    add := X.add,
-    smul := λ (c : ℝ) {x: G} hx, X.smul c hx,
-}
+    {G : Type*} [normed_group G] [normed_space ℂ G] (p: subspace ℂ G) :
+    subspace ℝ G := p.restrict_scalars ℝ
 
 -- (3) D.m.v. stelling 2.5.4 vinden we een (R-lineaire) uitbreiding φ r ∈ L(X(F), R)
 --     van Re φ 0 met ∥φ r∥L(X,R) = ∥Re φ 0∥L(Y(p),R) .
 --          f = Re φ 0 = re_of φ 0 : p →L[ℝ] ℝ
 --          p = Y ≤_ℂ X = F
 --          → φ r = g: F →L[ℝ] ℝ
-lemma z (p : subspace ℂ F) (f' : p →L[ℝ] ℝ) : 
-  ∃ g : F →L[ℝ] ℝ, (∀ x : (restrict_scalars p), g x = f' x) ∧ ∥g∥ = ∥f'∥ := begin
-    exact exists_extension_norm_eq (p.restrict_scalars ℝ) f',
-end
+lemma z (p : subspace ℂ F) (f' : p →L[ℝ] ℝ) :
+    ∃ g : F →L[ℝ] ℝ, (∀ x : restrict_scalars p, g x = f' x) ∧ ∥g∥ = ∥f'∥ :=
+    exists_extension_norm_eq (p.restrict_scalars ℝ) f'
 
-lemma d (p : subspace ℂ F) (f : p →L[ℂ] ℂ) :
-    ∃ g : F →L[ℂ] ℂ, (∀ x : p, g x = f x) ∧ ∥g∥ = ∥f∥
-    := begin
+theorem complex.exists_extension_norm_eq (p : subspace ℂ F) (f : p →L[ℂ] ℂ) :
+    ∃ g : F →L[ℂ] ℂ, (∀ x : p, g x = f x) ∧ ∥g∥ = ∥f∥ :=
+begin
     have := z p (re_of f),
     rcases this with ⟨g, ⟨hextends, hnormeq⟩⟩,
     use g.extend_to_C,
