@@ -100,6 +100,13 @@ lemma norm_bound (fr : F →L[ℝ] ℝ) :
 begin
     intros,
     let lm := fr.to_linear_map.extend_to_C,
+
+    -- We aim to find a `t : ℂ` such that
+    -- * `lm (t • x) = fr (t • x)` (so `lm (t • x) = t * lm x ∈ ℝ`)
+    -- * `∥lm x∥ = ∥lm (t • x)∥` (so `t.abs` must be 1)
+    -- If `lm x ≠ 0`, `(lm x)⁻¹` satisfies the first requirement, and after normalizing, it
+    -- satisfies the second.
+    -- (If `lm x = 0`, the goal is trivial.)
     classical,
     by_cases lm x = 0,
     {
@@ -108,8 +115,8 @@ begin
     },
 
     let fx := (lm x)⁻¹,
-    let norm := fx / fx.abs,
-    have : norm.abs = 1,
+    let t := fx / fx.abs,
+    have ht : t.abs = 1,
     {
         rw [complex.abs_div, abs_of_real, complex.abs_abs],
         apply div_self,
@@ -120,39 +127,39 @@ begin
         rw complex.abs_eq_zero,
         exact h,
     },
-    have : lm (norm • x) = fr (norm • x),
+    have : lm (t • x) = fr (t • x),
     {
         ext,
         {
             unfold_coes at *,
-            calc (lm.to_fun (norm • x)).re
-                = ((fr.to_linear_map.to_fun (norm • x) : ℂ)
-                  - I * fr.to_linear_map.to_fun (I • (norm • x))).re : rfl
-            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re
-                   - (I * fr.to_linear_map.to_fun (I • (norm • x))).re : by rw sub_re
-            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re
-                   - ((fr.to_linear_map.to_fun (I • (norm • x)): ℂ) * I).re : by rw mul_comm
-            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re :
+            calc (lm.to_fun (t • x)).re
+                = ((fr.to_linear_map.to_fun (t • x) : ℂ)
+                  - I * fr.to_linear_map.to_fun (I • (t • x))).re : rfl
+            ... = (fr.to_linear_map.to_fun (t • x) : ℂ).re
+                   - (I * fr.to_linear_map.to_fun (I • (t • x))).re : by rw sub_re
+            ... = (fr.to_linear_map.to_fun (t • x) : ℂ).re
+                   - ((fr.to_linear_map.to_fun (I • (t • x)): ℂ) * I).re : by rw mul_comm
+            ... = (fr.to_linear_map.to_fun (t • x) : ℂ).re :
                 by rw [smul_re, I_re, mul_zero, sub_zero],
         },
 
         rw of_real_im,
-        calc (lm (norm • x)).im
-            = (norm * lm x).im : by { unfold_coes at *, rw [lm.smul, smul_eq_mul], }
+        calc (lm (t • x)).im
+            = (t * lm x).im : by { unfold_coes at *, rw [lm.smul, smul_eq_mul], }
         ... = ((lm x)⁻¹ / ((lm x)⁻¹.abs) * lm x).im : rfl
         ... = ((1 / (lm x)⁻¹.abs) : ℂ).im : by rw [div_mul_eq_mul_div, inv_mul_cancel h]
         ... = 0 : by rw [←complex.of_real_one, ←of_real_div, of_real_im],
     },
 
     calc ∥lm x∥
-        = norm.abs * ∥lm x∥ : by rw [‹norm.abs = 1›, one_mul]
-    ... = ∥norm * lm x∥ : by rw [normed_field.norm_mul, norm.norm_eq_abs]
-    ... = ∥lm (norm • x)∥ : by {unfold_coes, rw [←smul_eq_mul, lm.smul]}
-    ... = ∥(fr (norm • x) : ℂ)∥ : by rw this
-    ... = ∥fr (norm • x)∥ : by rw norm_real
-    ... ≤ ∥fr∥ * ∥norm • x∥ : continuous_linear_map.le_op_norm _ _
-    ... = ∥fr∥ * (∥norm∥ * ∥x∥) : by rw norm_smul
-    ... = ∥fr∥ * ∥x∥ : by rw [norm_eq_abs, ‹norm.abs = 1›, one_mul],
+        = t.abs * ∥lm x∥ : by rw [ht, one_mul]
+    ... = ∥t * lm x∥ : by rw [normed_field.norm_mul, t.norm_eq_abs]
+    ... = ∥lm (t • x)∥ : by {unfold_coes, rw [←smul_eq_mul, lm.smul]}
+    ... = ∥(fr (t • x) : ℂ)∥ : by rw this
+    ... = ∥fr (t • x)∥ : by rw norm_real
+    ... ≤ ∥fr∥ * ∥t • x∥ : continuous_linear_map.le_op_norm _ _
+    ... = ∥fr∥ * (∥t∥ * ∥x∥) : by rw norm_smul
+    ... = ∥fr∥ * ∥x∥ : by rw [norm_eq_abs, ht, one_mul],
 end
 
 -- Extend `fr : F →L[ℝ] ℝ` to `F →L[ℂ] ℂ`.
