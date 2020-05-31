@@ -2,6 +2,7 @@ import analysis.complex.basic
 import analysis.normed_space.operator_norm
 import analysis.normed_space.hahn_banach
 import .extend
+
 open complex
 
 variables {F : Type*} [normed_group F] [normed_space ℂ F]
@@ -19,15 +20,14 @@ begin
   let fr := continuous_linear_map.re.comp (f.restrict_scalars ℝ),
   have fr_apply : ∀ x, fr x = (f x).re := λ x, rfl,
 
-  -- Use the real version to get a norm-preserving extension of `fr`,
-  -- which we'll call `g: F →L[ℝ] ℝ`.
+  -- Use the real version to get a norm-preserving extension of `fr`, which we'll call `g: F →L[ℝ] ℝ`.
   rcases apply_real p fr with ⟨g, ⟨hextends, hnormeq⟩⟩,
 
   -- Now `g` can be extended to the `F →L[ℂ] ℂ` we need.
   use g.extend_to_C,
 
   -- It is an extension of `f`.
-  have : ∀ x : p, (g.extend_to_C) x = f x,
+  have : ∀ x : p, g.extend_to_C x = f x,
   {
     intros,
     change (g x : ℂ) - I * g ((I • x) : p) = f x,
