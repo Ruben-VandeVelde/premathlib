@@ -100,20 +100,19 @@ def restrict_scalars' (f : E' →L[𝕜'] F') :
   ..linear_map.restrict_scalars 𝕜 (f.to_linear_map) }
 
 end restrict_scalars
-/-
+
 lemma z' (p : subspace ℂ F) (f' : p →L[ℝ] ℝ) :
   ∃ g : F →L[ℝ] ℝ, ∥g∥ = ∥f'∥ := begin
     -- type synonym `module.restrict_scalars R S E := E`.
     -- pp : submodule ℝ (module.restrict_scalars ℝ ℂ F)
-    have pp : submodule ℝ F := (p.restrict_scalars ℝ),
+    let pp : submodule ℝ F := (p.restrict_scalars ℝ),
     let f'' : (module.restrict_scalars ℝ ℂ p) →L[ℝ] ℝ := f'.restrict_scalars ℝ ,
-    let f''' : (p.restrict_scalars ℝ) →L[ℝ] ℝ := f'.restrict_scalars ℝ ,
+    let f''' : pp →L[ℝ] ℝ := (restrict_scalars' ℝ  f'),
     have := linear_map.coe_restrict_scalars_eq_coe ℝ  f'.to_linear_map,
-    have := exists_extension_norm_eq (p.restrict_scalars ℝ) f''',
+    have := exists_extension_norm_eq p f''',
     rcases this with ⟨a, b, c⟩,
     exact ⟨a, c⟩,
 end
--/
 
 theorem complex.exists_extension_norm_eq (p : subspace ℂ F) (f : p →L[ℂ] ℂ) :
     ∃ g : F →L[ℂ] ℂ, (∀ x : p, g x = f x) ∧ ∥g∥ = ∥f∥ :=
