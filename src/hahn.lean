@@ -4,7 +4,7 @@ import analysis.normed_space.hahn_banach
 import .extend
 open complex
 
-variables  {F : Type*} [normed_group F] [normed_space ℂ F]
+variables {F : Type*} [normed_group F] [normed_space ℂ F]
 
 noncomputable def restrict_scalars (p: subspace ℂ F) : subspace ℝ F := p.restrict_scalars ℝ
 

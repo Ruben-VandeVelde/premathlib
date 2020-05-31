@@ -14,39 +14,58 @@ begin
     {
         intros,
         calc
-            ((fr.to_fun (x + y)): ℂ ) - I * fr.to_fun (I • (x + y))
-            = ((fr.to_fun (x + y)): ℂ ) - I * fr.to_fun (I • x + I • y) : by rw smul_add
-        ... = ((fr.to_fun x + fr.to_fun y) : ℂ) - I * fr.to_fun (I • x + I • y) : by rw [←complex.of_real_add, fr.add]
-        ... = ((fr.to_fun x + fr.to_fun y) : ℂ) - I * (fr.to_fun (I • x) + fr.to_fun (I • y)) : by rw [←complex.of_real_add (fr.to_fun (I • x)), fr.add]
-        ... = fr.to_fun x - I * fr.to_fun (I • x) + (fr.to_fun y  - I * fr.to_fun (I • y)) : by ring,
+            ((fr.to_fun (x + y)): ℂ) - I * fr.to_fun (I • (x + y))
+            = ((fr.to_fun (x + y)): ℂ) - I * fr.to_fun (I • x + I • y) : by rw smul_add
+        ... = ((fr.to_fun x + fr.to_fun y) : ℂ) - I * fr.to_fun (I • x + I • y) :
+            by rw [←complex.of_real_add, fr.add]
+        ... = ((fr.to_fun x + fr.to_fun y) : ℂ) - I * (fr.to_fun (I • x) + fr.to_fun (I • y)) :
+            by rw [←complex.of_real_add (fr.to_fun (I • x)), fr.add]
+        ... = fr.to_fun x - I * fr.to_fun (I • x) + (fr.to_fun y - I * fr.to_fun (I • y)) : by ring,
     },
 
     have smul_ℝ : ∀ (c : ℝ) (x : F), fc (c • x) = c * fc x,
     {
         intros,
+        have h1 : (fr.to_fun (c • x) : ℂ) = ((c * fr.to_fun x) : ℂ),
+        { rw [←complex.of_real_mul, fr.smul, smul_eq_mul] },
+
+        have h2 : I * fr.to_fun (I • (c • x)) = c * (I * fr.to_fun (I • x)),
+        calc
+            I * fr.to_fun (I • (c • x))
+            = I * fr.to_fun (I • ((c : ℂ) • x)) : rfl
+        ... = I * fr.to_fun ((c : ℂ) • (I • x)) : by rw smul_comm
+        ... = I * fr.to_fun (c • (I • x)) : rfl
+        ... = I * (c * fr.to_fun (I • x)) : by rw [←complex.of_real_mul, fr.smul, smul_eq_mul]
+        ... = c * (I * fr.to_fun (I • x)) : by ring,
+
         calc
             (fr.to_fun (c • x) : ℂ) - I * fr.to_fun (I • (c • x))
-            = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • (c • x)) : by rw [←complex.of_real_mul, fr.smul, smul_eq_mul]
-        ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (I • ((c:ℂ) • x)) : rfl
-        ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun ((c:ℂ) • (I • x)) : by rw smul_comm I _ x
-        ... = ((c * fr.to_fun x) : ℂ) - I * fr.to_fun (c • (I • x)) : rfl
-        ... = ((c * fr.to_fun x) : ℂ) - I * (c * fr.to_fun (I • x)) : by rw [←complex.of_real_mul _ (fr.to_fun (I • x)), fr.smul, smul_eq_mul]
-        ... = ((c * fr.to_fun x) : ℂ) - (c * (I * fr.to_fun (I • x))) : by ring
+            = ((c * fr.to_fun x) : ℂ) - (c * (I * fr.to_fun (I • x))) : by rw [h1, h2]
         ... = c * (fr.to_fun x - I * fr.to_fun (I • x)) : by ring,
     },
 
     have smul_I : ∀ x : F, fc (I • x) = I * fc x,
     {
         intros,
+        have h1 : I * fr.to_fun (I • I • x) = - (I * fr.to_fun x),
+        {
+            calc I * fr.to_fun (I • I • x)
+                = I * fr.to_fun (((-1 : ℝ) : ℂ) • x) :
+                by rw [←mul_smul, I_mul_I, of_real_neg, of_real_one]
+            ... = I * fr.to_fun ((-1 : ℝ) • x) : rfl
+            ... = I * ((-1 : ℝ) * fr.to_fun x: ℝ) : by rw [fr.smul (-1), smul_eq_mul]
+            ... = (I * -1) * fr.to_fun x :
+                by rw [of_real_mul, mul_assoc, of_real_neg, of_real_one]
+            ... = - (I * fr.to_fun x) : by ring
+        },
+
         calc fc (I • x)
             = (fr.to_fun (I • x) : ℂ) - I * fr.to_fun (I • I • x) : rfl
-        ... = (fr.to_fun (I • x) : ℂ) - I * fr.to_fun (((-1 : ℝ) : ℂ) • x) : by rw [←mul_smul, I_mul_I, of_real_neg, of_real_one]
-        ... = (fr.to_fun (I • x) : ℂ) - I * fr.to_fun ((-1 : ℝ) • x) : rfl
-        ... = (fr.to_fun (I • x) : ℂ) - I * ((-1 : ℝ) * fr.to_fun x: ℝ) : by rw [fr.smul (-1), smul_eq_mul]
-        ... = (fr.to_fun (I • x) : ℂ) - (I * -1) *  fr.to_fun x : by rw [of_real_mul, mul_assoc, of_real_neg, of_real_one]
-        ... = (fr.to_fun (I • x) : ℂ) + (I * fr.to_fun x) : by ring
+        ... = (fr.to_fun (I • x) : ℂ) - - (I * fr.to_fun x) : by rw h1
+        ... = (fr.to_fun (I • x) : ℂ) + (I * fr.to_fun x) : by rw sub_neg_eq_add
         ... = (I * fr.to_fun x) + fr.to_fun (I • x) : by rw add_comm
-        ... = (I * fr.to_fun x) - (I * I) * fr.to_fun (I • x) : by rw [I_mul_I, neg_one_mul, sub_neg_eq_add]
+        ... = (I * fr.to_fun x) - (I * I) * fr.to_fun (I • x) :
+            by rw [I_mul_I, neg_one_mul, sub_neg_eq_add]
         ... = (I * fr.to_fun x) - I * (I * fr.to_fun (I • x)) : by rw mul_assoc
         ... = I * fc x : by rw mul_sub,
     },
@@ -107,10 +126,14 @@ begin
         {
             unfold_coes at *,
             calc (lm.to_fun (norm • x)).re
-                = ((fr.to_linear_map.to_fun (norm • x) : ℂ) - I * fr.to_linear_map.to_fun (I • (norm • x))).re : rfl
-            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - (I * fr.to_linear_map.to_fun (I • (norm • x))).re : by rw sub_re
-            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re - ((fr.to_linear_map.to_fun (I • (norm • x)): ℂ) * I).re : by rw mul_comm
-            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re : by rw [smul_re, I_re, mul_zero, sub_zero],
+                = ((fr.to_linear_map.to_fun (norm • x) : ℂ)
+                  - I * fr.to_linear_map.to_fun (I • (norm • x))).re : rfl
+            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re
+                   - (I * fr.to_linear_map.to_fun (I • (norm • x))).re : by rw sub_re
+            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re
+                   - ((fr.to_linear_map.to_fun (I • (norm • x)): ℂ) * I).re : by rw mul_comm
+            ... = (fr.to_linear_map.to_fun (norm • x) : ℂ).re :
+                by rw [smul_re, I_re, mul_zero, sub_zero],
         },
 
         rw of_real_im,
