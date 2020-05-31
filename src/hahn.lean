@@ -66,58 +66,9 @@ lemma z (p : subspace ℂ F) (f' : p →L[ℝ] ℝ) :
     ∃ g : F →L[ℝ] ℝ, (∀ x : restrict_scalars p, g x = f' x) ∧ ∥g∥ = ∥f'∥ :=
     exists_extension_norm_eq (p.restrict_scalars ℝ) f'
 
-instance normed_algebra.id {R} [normed_field R] : normed_algebra R R := {
-    to_algebra := algebra.id R,
-    norm_algebra_map_eq := λ x, rfl
-}
-
-section restrict_scalars
-
-variables
-    (𝕜 : Type*) [normed_field 𝕜]
-    {𝕜' : Type*} [normed_field 𝕜'] [normed_algebra 𝕜 𝕜']
-    {E' : Type*} [normed_group E'] [normed_space 𝕜' E']
-    {F' : Type*} [normed_group F'] [normed_space 𝕜' F']
-
-
-instance (R : Type*) (S : Type*) (E : Type*) [I : topological_space E] :
-   topological_space (module.restrict_scalars R S E) := I
---⊢ topological_space (module.restrict_scalars 𝕜 𝕜' F')
-
-section
-variables (R : Type*) [comm_ring R] (S : Type*) [ring S] [algebra R S]
-variables (E : Type*) [add_comm_group E] [module S E]
-variables {R S E}
-instance  (V : submodule S E) [I : comm_ring V] :
-   comm_ring (submodule.restrict_scalars R V) := I
-instance  (V : submodule S E) [I : add_comm_group V] :
-   add_comm_group (submodule.restrict_scalars R V) := I
-end
-
-def restrict_scalars' (f : E' →L[𝕜'] F') :
-    (module.restrict_scalars 𝕜 𝕜' E') →L[𝕜] (module.restrict_scalars 𝕜 𝕜' F') :=
-{ cont := f.cont,
-  ..linear_map.restrict_scalars 𝕜 (f.to_linear_map) }
-
-end restrict_scalars
-
-lemma z' (p : subspace ℂ F) (f' : p →L[ℝ] ℝ) :
-  ∃ g : F →L[ℝ] ℝ, ∥g∥ = ∥f'∥ := begin
-    -- type synonym `module.restrict_scalars R S E := E`.
-    -- pp : submodule ℝ (module.restrict_scalars ℝ ℂ F)
-    let pp : submodule ℝ F := (p.restrict_scalars ℝ),
-    let f'' : (module.restrict_scalars ℝ ℂ p) →L[ℝ] ℝ := f'.restrict_scalars ℝ ,
-    let f''' : pp →L[ℝ] ℝ := (restrict_scalars' ℝ  f'),
-    have := linear_map.coe_restrict_scalars_eq_coe ℝ  f'.to_linear_map,
-    have := exists_extension_norm_eq p f''',
-    rcases this with ⟨a, b, c⟩,
-    exact ⟨a, c⟩,
-end
-
 theorem complex.exists_extension_norm_eq (p : subspace ℂ F) (f : p →L[ℂ] ℂ) :
     ∃ g : F →L[ℂ] ℂ, (∀ x : p, g x = f x) ∧ ∥g∥ = ∥f∥ :=
 begin
---    have := exists_extension_norm_eq (p.restrict_scalars ℝ : subspace ℝ F) (re_of f),
     have := z p (re_of f),
     rcases this with ⟨g, ⟨hextends, hnormeq⟩⟩,
     use g.extend_to_C,
